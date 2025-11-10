@@ -1,0 +1,19 @@
+// Replace state load with server-backed load
+const API = 'https://YOUR_BACKEND_URL_HERE'; // replace
+
+async function loadStateFromServer(){
+  // load draws, participants, payments from server
+  try{
+    const draws = await (await fetch(API + '/api/draws')).json();
+    const participants = await (await fetch(API + '/api/participants')).json();
+    const payments = await (await fetch(API + '/api/payments')).json();
+    state.draws = draws;
+    state.participants = participants;
+    state.payments = payments;
+    saveState(); // optionally store local copy
+  }catch(e){
+    console.error('server load error', e);
+    loadState(); // fallback to localStorage demo
+  }
+}
+loadStateFromServer();
