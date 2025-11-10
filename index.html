@@ -1,0 +1,179 @@
+<!-- Save as index.html and upload to GitHub repo root or host on GitHub Pages -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lucky Committee — User</title>
+  <link href="https://fonts.cdnfonts.com/css/jameel-noori-nastaleeq" rel="stylesheet">
+  <style>
+    :root{--orange:#ff7a00;--black:#111;--white:#fff}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, Arial, sans-serif;background:linear-gradient(180deg,#fff7f0,#fff);color:#222}
+    header{background:var(--orange);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;gap:12px;align-items:center}
+    .logo .mark{width:48px;height:48px;border-radius:10px;background:#fff;color:var(--orange);display:flex;align-items:center;justify-content:center;font-weight:900}
+    .site-title{font-weight:800}
+    .hero{padding:18px;text-align:center}
+    .card{background:#fff;border-radius:12px;padding:16px;margin:14px auto;max-width:900px;box-shadow:0 8px 30px rgba(0,0,0,0.06)}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+    @media(max-width:960px){.grid{grid-template-columns:1fr}}
+    .btn{background:var(--orange);color:#fff;padding:10px 12px;border-radius:10px;border:none;font-weight:800}
+    .small{font-size:13px;color:#666}
+    .slider{height:220px;border-radius:10px;overflow:hidden;margin-bottom:12px}
+    .slides{display:flex;transition:transform .6s ease}
+    .slide{min-width:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800}
+    footer{padding:20px;text-align:center;color:#555;font-size:14px}
+
+    /* forms */
+    input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #eee;margin:6px 0}
+    label{font-weight:700;font-size:13px}
+  </style>
+</head>
+<body>
+  <script>
+    // Set your backend URL here after deploy. For local testing use http://localhost:4000
+    const API_BASE = 'https://YOUR_BACKEND_URL_HERE'; // <-- REPLACE BEFORE DEPLOY
+  </script>
+
+  <header>
+    <div class="logo">
+      <div class="mark">LC</div>
+      <div>
+        <div class="site-title">Lucky Committee</div>
+        <div class="small">Win big — demo</div>
+      </div>
+    </div>
+    <div>
+      <button class="btn" onclick="openJoin()">Join</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1 style="margin:8px 0;color:var(--orange)">Join Lucky Committee — Modern Demo</h1>
+      <p class="small">Pay with EasyPaisa, JazzCash, NayaPay, SadaPay or USDT. (Demo: use test)</p>
+    </div>
+
+    <section class="card">
+      <div class="grid">
+        <div>
+          <div class="slider" id="slider"><div class="slides" id="slides">
+            <div class="slide" style="background:linear-gradient(90deg,#ffd76a,#fff07a);">Win Cash Prize</div>
+            <div class="slide" style="background:linear-gradient(90deg,#ff9b6b,#ffd76a);">Join & Participate</div>
+            <div class="slide" style="background:linear-gradient(90deg,#ffd76a,#b2e7ff);">Daily Draw</div>
+            <div class="slide" style="background:linear-gradient(90deg,#fff299,#ffd76a);">Secure & Fair</div>
+          </div></div>
+
+          <div style="margin-top:12px">
+            <h3 style="color:var(--orange)">Available Draws</h3>
+            <div id="drawsArea"></div>
+          </div>
+        </div>
+
+        <aside style="min-width:280px">
+          <div style="background:#fff;padding:14px;border-radius:10px">
+            <h4>Join Now</h4>
+            <label>Name</label><input id="u_name" />
+            <label>Phone</label><input id="u_phone" />
+            <label>Choose Draw</label><select id="u_draw"></select>
+            <label>Payment Method</label><select id="u_method"></select>
+            <button class="btn" onclick="submitJoin()">Submit & Pay (demo)</button>
+            <p id="joinMsg" class="small"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 style="color:var(--orange)">Recent Winners / Draw status</h3>
+      <div id="statusArea" class="small"></div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
+      <!-- Use local logos placed in repo or backend static -->
+      <img src="static/logos/easypaisa.png" alt="EasyPaisa" style="height:36px">
+      <img src="static/logos/jazzcash.png" alt="JazzCash" style="height:36px">
+      <img src="static/logos/nayapay.png" alt="NayaPay" style="height:36px">
+      <img src="static/logos/sadapay.png" alt="SadaPay" style="height:36px">
+      <img src="static/logos/usdt.png" alt="USDT" style="height:36px">
+    </div>
+    <div style="margin-top:8px">© 2025 Lucky Committee • Demo</div>
+  </footer>
+
+  <script>
+    // Simple slider
+    let cur=0;
+    setInterval(()=>{ const slides=document.getElementById('slides'); cur=(cur+1)%4; slides.style.transform='translateX(-'+(cur*100)+'%)'; },3500);
+
+    // Fetch draws & payments and render
+    async function loadData(){
+      try{
+        const draws = await (await fetch(API_BASE + '/api/draws')).json();
+        const payments = await (await fetch(API_BASE + '/api/payments')).json();
+        renderDraws(draws); renderPayments(payments);
+      }catch(e){
+        document.getElementById('drawsArea').innerHTML = '<div class="small">Server not available. Deploy backend and set API_BASE.</div>';
+      }
+    }
+
+    function renderDraws(draws){
+      const area = document.getElementById('drawsArea'); area.innerHTML='';
+      const select = document.getElementById('u_draw'); select.innerHTML='<option value="">Select</option>';
+      draws.forEach(d=>{
+        const div=document.createElement('div');
+        div.style.padding='10px'; div.style.borderBottom='1px solid #f5f5f5';
+        div.innerHTML = <strong>${d.title}</strong> • ${d.price} PKR • ${d.datetime ? new Date(d.datetime).toLocaleString() : '-'}<div class="small">${d.description||''}</div>;
+        area.appendChild(div);
+        const opt = document.createElement('option'); opt.value=d.id; opt.text = d.title+' — '+d.price+' PKR'; select.appendChild(opt);
+      });
+    }
+
+    function renderPayments(payments){
+      const pm = document.getElementById('u_method'); pm.innerHTML = '<option value="">Select method</option>';
+      payments.forEach(p => {
+        const opt = document.createElement('option'); opt.value = p.id; opt.text = p.provider + ' • ' + p.value;
+        pm.appendChild(opt);
+      });
+    }
+
+    async function submitJoin(){
+      const name = document.getElementById('u_name').value.trim();
+      const phone = document.getElementById('u_phone').value.trim();
+      const draw = document.getElementById('u_draw').value;
+      const method = document.getElementById('u_method').value;
+      if(!name||!phone||!draw) return document.getElementById('joinMsg').innerText='Provide name, phone, draw';
+      document.getElementById('joinMsg').innerText='Submitting...';
+      try{
+        const res = await fetch(API_BASE + '/api/participants', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, phone, draw_id: draw, method })});
+        const data = await res.json();
+        if(data.ok){ document.getElementById('joinMsg').innerText='Entry submitted — wait admin confirmation.'; document.getElementById('u_name').value=''; document.getElementById('u_phone').value=''; }
+        else document.getElementById('joinMsg').innerText = 'Error: ' + (data.error||'');
+      }catch(e){ document.getElementById('joinMsg').innerText='Server error'; }
+    }
+
+    // status area: show winners (poll)
+    async function loadStatus(){
+      try{
+        const draws = await (await fetch(API_BASE + '/api/draws')).json();
+        const area = document.getElementById('statusArea'); area.innerHTML='';
+        draws.forEach(d=>{
+          const w = d.winner_json ? JSON.parse(d.winner_json) : null;
+          const s = document.createElement('div');
+          s.style.padding='8px'; s.style.borderBottom='1px solid #f7f7f7';
+          s.innerHTML = `<strong>${d.title}</strong> • ${d.price} PKR • ${d.datetime ? new Date(d.datetime).toLocaleString() : '-'}
+            <div class="small">Winner: ${w? (w.name + ' • ' + w.phone) : 'Not selected'}</div>`;
+          area.appendChild(s);
+        });
+      }catch(e){}
+    }
+
+    // initial
+    loadData(); loadStatus();
+    setInterval(()=>{ loadData(); loadStatus(); }, 7000);
+  </script>
+</body>
+</html>
